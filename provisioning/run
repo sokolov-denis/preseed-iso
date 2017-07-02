@@ -1,0 +1,24 @@
+#!/bin/bash
+
+cd "$(dirname $0)"
+
+{
+
+  # Get OS identifications parameters
+  if [ -f /etc/os-release ]; then
+    source /etc/os-release
+  fi
+
+  # Make hooks executable
+  find hooks -type f -exec chmod 755 {} +
+
+  # Run common hooks
+  run-parts --verbose hooks/common
+
+  # Run OS specific hooks
+  if [ -n "$ID" ]; then
+    mkdir -p  hooks/$ID
+    run-parts --verbose hooks/$ID
+  fi
+
+} &> provisioning.log

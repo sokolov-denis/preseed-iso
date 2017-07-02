@@ -1,0 +1,4 @@
+#!/bin/bash
+
+apt-get --yes purge accountsservice linux-headers*
+apt-get --yes --purge autoremove

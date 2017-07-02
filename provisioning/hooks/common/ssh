@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ ! -f "/etc/ssh/sshd_config" ]; then
+  echo "/etc/ssh/sshd_config: file not found"
+  exit
+fi
+
+cat >> /etc/ssh/sshd_config << EOF
+
+# Disable lookup remote host name
+UseDNS no
+
+# Disable GSSAPI authentication
+GSSAPIAuthentication no
+EOF

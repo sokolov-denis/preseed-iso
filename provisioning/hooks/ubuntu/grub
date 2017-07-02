@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Configure GRUB
+if [ -f /etc/default/grub ]; then
+  sed "s/\(GRUB_CMDLINE_LINUX_DEFAULT\)=\"quiet splash\"/\1=\"text\"/" -i /etc/default/grub
+  update-grub
+fi

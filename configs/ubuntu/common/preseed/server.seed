@@ -1,0 +1,234 @@
+################################################################################
+## Advanced
+##
+
+# https://ubuntuforums.org/archive/index.php/t-2215103.html
+#d-i preseed/early_command string anna-install fdisk-udeb
+
+
+################################################################################
+## Locale
+##
+
+d-i debian-installer/locale select en_US.UTF-8
+
+
+################################################################################
+## Keyboard
+##
+
+d-i console-setup/ask_detect boolean false
+d-i keyboard-configuration/layoutcode string us
+d-i keyboard-configuration/xkb-keymap select us
+
+
+################################################################################
+## Network
+##
+
+d-i netcfg/choose_interface select auto
+d-i netcfg/get_hostname string unassigned
+d-i netcfg/get_domain string unassigned
+d-i netcfg/hostname string unassigned
+
+
+################################################################################
+## Time
+##
+
+d-i clock-setup/utc boolean true
+d-i time/zone select Europe/Moscow
+
+
+################################################################################
+## Partitioning
+##
+
+d-i partman-auto/disk string /dev/hda /dev/sda /dev/vda
+
+# Make GUID Partition Table
+d-i partman/default_label string gpt
+d-i partman/choose_label string gpt
+d-i partman-partitioning/default_label string gpt
+d-i partman-partitioning/choose_label string gpt
+d-i partman-basicfilesystems/default_label string gpt
+d-i partman-basicfilesystems/choose_label string gpt
+
+d-i partman/confirm_write_new_label boolean true
+d-i partman/alignment string optimal
+d-i partman/confirm_nooverwrite boolean true
+d-i partman/confirm boolean true
+d-i partman/choose_partition select Finish partitioning and write changes to disk
+d-i partman/choose_partition select Finish
+
+d-i partman-md/device_remove_md boolean true
+d-i partman-md/confirm_nooverwrite boolean true
+d-i partman-md/confirm boolean true
+
+d-i partman-lvm/device_remove_lvm boolean true
+d-i partman-lvm/confirm_nooverwrite boolean true
+d-i partman-lvm/confirm boolean true
+
+d-i partman-auto/method string lvm
+d-i partman-auto-lvm/guided_size string max
+d-i partman-auto-lvm/new_vg_name string vg0
+
+# https://bugs.launchpad.net/ubuntu/+source/debian-installer/+bug/1347726
+#d-i partman/unmount_active boolean true
+
+d-i partman-auto/choose_recipe select recipe
+
+# /boot      = 500MB
+# LVM
+#   swap     = 1000MB
+#   /        = 3500MB
+#   /home    = 1000MB
+#   /tmp     = 1000MB
+#   /var     = 1000MB
+#   /var/log = 1000MB
+#   reserved = all free space
+# ---------------------------
+# Total: 9000MB
+d-i partman-auto/expert_recipe string recipe :: \
+  1 1 1 free \
+      $gptonly{ } \
+      $primary{ } \
+      $bios_boot{ } \
+      method{ biosgrub } \
+      . \
+  500 20 500 ext4 \
+      $gptonly{ } \
+      $primary{ } \
+      method{ format } format{ } \
+      use_filesystem{ } filesystem{ ext4 } \
+      mountpoint{ /boot } \
+      . \
+  1000 10 1000 linux-swap \
+      $lvmok{ } \
+      method{ swap } format{ } \
+      lv_name{ swap } \
+      . \
+  3500 20 3500 ext4 \
+      $lvmok{ } \
+      method{ format } format{ } \
+      use_filesystem{ } filesystem{ ext4 } \
+      mountpoint{ / } \
+      lv_name{ root } \
+      . \
+  1000 20 1000 ext4 \
+      $lvmok{ } \
+      method{ format } format{ } \
+      use_filesystem{ } filesystem{ ext4 } \
+      mountpoint{ /home } \
+      lv_name{ home } \
+      . \
+  1000 20 1000 ext4 \
+      $lvmok{ } \
+      method{ format } format{ } \
+      use_filesystem{ } filesystem{ ext4 } \
+      mountpoint{ /tmp } \
+      lv_name{ tmp } \
+      . \
+  1000 20 1000 ext4 \
+      $lvmok{ } \
+      method{ format } format{ } \
+      use_filesystem{ } filesystem{ ext4 } \
+      mountpoint{ /var } \
+      lv_name{ var } \
+      . \
+  1000 20 1000 ext4 \
+      $lvmok{ } \
+      method{ format } format{ } \
+      use_filesystem{ } filesystem{ ext4 } \
+      mountpoint{ /var/log } \
+      lv_name{ var_log } \
+      . \
+  1 10 -1 ext4 \
+      $defaultignore{ } \
+      $lvmok{ } \
+      method{ lvm } \
+      lv_name{ reserved } \
+      .
+
+
+################################################################################
+## Users and passwords
+##
+
+d-i user-setup/allow-password-weak boolean true
+d-i user-setup/encrypt-home boolean false
+
+d-i passwd/root-login boolean true
+d-i passwd/make-user boolean false
+d-i passwd/root-password password root
+d-i passwd/root-password-again password root
+
+
+################################################################################
+## APT configuration
+##
+
+d-i base-installer/install-recommends boolean false
+
+d-i mirror/country string manual
+d-i mirror/http/hostname string ru.archive.ubuntu.com
+d-i mirror/http/directory string /ubuntu
+d-i mirror/http/proxy string
+
+d-i apt-setup/restricted boolean true
+d-i apt-setup/universe boolean true
+d-i apt-setup/backports boolean true
+
+d-i apt-setup/services-select multiselect security
+d-i apt-setup/security_host string security.ubuntu.com
+d-i apt-setup/security_path string /ubuntu
+
+
+################################################################################
+## Packages
+##
+
+tasksel tasksel/first multiselect none
+
+d-i pkgsel/upgrade select full-upgrade
+d-i pkgsel/updatedb boolean true
+d-i pkgsel/update-policy select unattended-upgrades
+d-i pkgsel/language-packs multiselect
+
+d-i pkgsel/include string \
+  apt-transport-https \
+  bash-completion \
+  bridge-utils \
+  ifenslave \
+  less \
+  python-minimal \
+  openssh-server \
+  sudo \
+  wget
+
+
+################################################################################
+## GRUB
+##
+
+d-i grub-installer/only_debian boolean true
+d-i grub-installer/with_other_os boolean true
+d-i grub-installer/bootdev string default
+
+
+################################################################################
+## Custom commands
+##
+
+d-i preseed/late_command string \
+  sh /cdrom/provisioning/outside.sh; \
+  cp -rf /cdrom/provisioning /target/root/; \
+  in-target bash /root/provisioning/run
+
+
+################################################################################
+## Finishing
+##
+
+# Avoid that last message about the install being complete.
+d-i finish-install/reboot_in_progress note
